@@ -1,4 +1,4 @@
-const CACHE_NAME = "pathfinder-shell-v7";
+const CACHE_NAME = "pathfinder-shell-v8";
 const SHELL_FILES = [
   "/",
   "/offline.html",
@@ -78,19 +78,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network first so a deploy is picked up on the next load; the cache is only the offline fallback.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then(async (response) => {
-          const safe = await safeResponse(response);
-          if (safe.ok) {
-            const clone = safe.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return safe;
-        })
-        .catch(() => cached || caches.match("/offline.html"));
-      return cached || network;
-    })
+    fetch(event.request)
+      .then(async (response) => {
+        const safe = await safeResponse(response);
+        if (safe.ok) {
+          const clone = safe.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return safe;
+      })
+      .catch(async () => (await caches.match(event.request)) || (await caches.match("/offline.html")) || Response.error())
   );
 });
