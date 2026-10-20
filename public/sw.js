@@ -1,4 +1,4 @@
-const CACHE_NAME = "pathfinder-shell-v4";
+const CACHE_NAME = "pathfinder-shell-v7";
 const SHELL_FILES = [
   "/",
   "/offline.html",

@@ -1,9 +1,13 @@
+import { webcrypto } from "node:crypto";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import app from "./index.js";
 import { SupabaseDb } from "./supabase-db.js";
+
+// Node 18 does not expose Web Crypto as a global; Workers (and Node 19+) do.
+if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)), "public");
 const port = Number(process.env.PORT || 3000);
@@ -62,6 +66,31 @@ async function serveStatic(request, response) {
   }
 }
 
+// Workers AI only exists inside Cloudflare, so locally we call the same models over its REST API.
+const localAi = process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN
+  ? {
+      async run(model, input) {
+        const res = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/${model}`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+          }
+        );
+        const body = await res.json().catch(() => null);
+        if (!res.ok || !body?.success) {
+          throw new Error(body?.errors?.[0]?.message || `Workers AI request failed (${res.status})`);
+        }
+        return body.result;
+      },
+    }
+  : undefined;
+
+if (!localAi) {
+  console.warn("Finder AI is disabled locally: set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in worker/.dev.vars");
+}
+
 async function handleApi(request, response) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
@@ -82,6 +111,7 @@ async function handleApi(request, response) {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     LOCAL_ACCOUNT_CREATOR: "1",
     DB: new SupabaseDb(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
+    AI: localAi,
   };
   const result = await app.fetch(webRequest, env);
   const output = Buffer.from(await result.arrayBuffer());

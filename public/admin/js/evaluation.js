@@ -1,12 +1,24 @@
+import { groupByTerm, semesterLabel, yearLabel } from "/student/js/pathfinder.js";
+
 export function renderEvaluation(container, snapshot) {
   const s = snapshot.student;
   const tags = [];
   if (s.isIrregular) tags.push('<span class="pill pill-eligible">Irregular</span>');
   if (s.isShifter) tags.push('<span class="pill pill-eligible">Shifter</span>');
 
-  const rows = snapshot.subjects
-    .map(
-      (sub) => `
+  const rows = groupByTerm(snapshot.subjects)
+    .map(({ year, terms }) =>
+      terms
+        .map(({ sem, subjects }) => {
+          const units = subjects.reduce((sum, sub) => sum + Number(sub.units || 0), 0);
+          const head = `
+      <tr class="eval-term-row">
+        <td colspan="4">${yearLabel(year)} · ${semesterLabel(sem)} <span class="mono">(Y${year}S${sem})</span></td>
+        <td class="mono">${units} units</td>
+      </tr>`;
+          return head + subjects
+            .map(
+              (sub) => `
       <tr>
         <td class="mono">${sub.code}</td>
         <td>${sub.name}</td>
@@ -14,6 +26,10 @@ export function renderEvaluation(container, snapshot) {
         <td>${sub.units}</td>
         <td><span class="pill pill-${sub.status}">${sub.status}</span></td>
       </tr>`
+            )
+            .join("");
+        })
+        .join("")
     )
     .join("");
 

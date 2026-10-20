@@ -71,6 +71,8 @@ main{max-width:1400px;margin:0 auto;}
 .eval-table thead th{position:sticky;top:78px;background:var(--surface);}
 .eval-table th{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);}
 .eval-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+.eval-table .eval-term-row td{background:var(--surface-2);font-weight:600;padding:8px;font-size:12px;}
+.eval-table .eval-term-row td:last-child{color:var(--text-muted);font-weight:500;}
 .eval-actions{display:flex;gap:10px;margin-top:20px;}
 
 .import-grid{display:grid;grid-template-columns:1fr;gap:16px;}

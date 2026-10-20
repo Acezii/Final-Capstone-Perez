@@ -68,13 +68,15 @@
     <p>Tap any node in the map, or a card below, to mark a subject complete. Status recomputes instantly — including cascading locks if you undo a prerequisite something else depends on.</p>
   </div>
   <div class="hero-graph card">
-    <svg id="constellation" viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg"></svg>
+    <svg id="constellation" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
   <div class="legend">
     <div class="legend-item"><span class="legend-dot dot-completed"></span>Completed</div>
     <div class="legend-item"><span class="legend-dot dot-eligible"></span>Eligible now</div>
     <div class="legend-item"><span class="legend-dot dot-locked"></span>Locked</div>
+    <div class="legend-item"><span class="legend-dot dot-failed"></span>Failed</div>
   </div>
+  <p class="graph-hint">Hover or tab to a subject to trace its prerequisite chain. Arrows point from a prerequisite to the subject it unlocks.</p>
   <div class="subject-grid" id="subjectGrid"></div>
 </section>
 
