@@ -176,3 +176,14 @@ $$;
 
 revoke execute on function execute_sql(text) from public, anon, authenticated;
 grant execute on function execute_sql(text) to service_role;
+
+-- Daily cleanup (22:00 UTC = 6 AM Manila): close Finder conversations left open for over 12 hours.
+create extension if not exists pg_cron;
+
+select cron.schedule(
+  'close-stale-ai-conversations',
+  '0 22 * * *',
+  $$update ai_conversations
+       set status = 'closed', closed_at = now(), closed_reason = 'auto_closed_end_of_day'
+     where status = 'open' and created_at < now() - interval '12 hours'$$
+);
