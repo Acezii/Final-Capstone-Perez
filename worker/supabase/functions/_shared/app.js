@@ -285,6 +285,11 @@ export default {
       }
 
       if (path === "/api/superadmin/admins" && request.method === "POST") {
+        const firstAdmin = await db.prepare("SELECT id FROM admins LIMIT 1").first();
+        if (firstAdmin) {
+          const auth = await requireAuth(request, env, "admin");
+          if (!auth) return err("Unauthorized", 401);
+        }
         const body = await request.json();
         const username = String(body.username || "").trim();
         const fullName = String(body.fullName || "").trim();
