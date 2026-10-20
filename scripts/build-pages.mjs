@@ -1,6 +1,6 @@
 // Builds public/ into dist/ for GitHub Pages.
 // Pages serves a project site from /<repo>/, so root-absolute paths ("/shared/...") are
-// prefixed with BASE_PATH, and the frontend is pointed at the deployed Worker via API_BASE_URL.
+// prefixed with BASE_PATH, and the frontend is pointed at the Supabase Edge Function via API_BASE_URL.
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
@@ -10,7 +10,7 @@ const BASE = (process.env.BASE_PATH || "").replace(/\/+$/, "");
 const API = (process.env.API_BASE_URL || "").replace(/\/+$/, "");
 
 if (!API) {
-  console.error("API_BASE_URL is not set. Set it to your Worker URL, e.g. https://udm-pathfinder-api.<you>.workers.dev");
+  console.error("API_BASE_URL is not set. Set it to your Supabase functions URL, e.g. https://<project-ref>.supabase.co/functions/v1");
   process.exit(1);
 }
 
@@ -18,7 +18,7 @@ const TEXT = new Set([".html", ".js", ".json", ".css"]);
 
 function rewrite(source) {
   return source
-    // Direct fetches that bypass shared/js/api.js still need to reach the Worker.
+    // Direct fetches that bypass shared/js/api.js still need to reach the API.
     .replace(/fetch\((["'`])\/api\//g, "fetch((window.PATHFINDER_API_BASE || " + JSON.stringify(API) + ") + $1/api/")
     // Prefix site paths, leaving API paths (joined to API_BASE at runtime) alone.
     .replace(/(["'`(])\/(?!\/|api\/)([A-Za-z][^"'`)\s]*)?(?=["'`)])/g, (_, open, rest = "") => `${open}${BASE}/${rest}`);

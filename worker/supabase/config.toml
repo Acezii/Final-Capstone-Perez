@@ -1,0 +1,5 @@
+project_id = "udm-pathfinder"
+
+# The API signs its own login tokens, so Supabase must not require a Supabase JWT.
+[functions.api]
+verify_jwt = false

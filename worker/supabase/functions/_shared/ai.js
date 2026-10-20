@@ -41,7 +41,7 @@ async function runModel(env, model, messages) {
 
 export async function askAssistant(env, studentContext, history, message) {
   if (!env.AI) {
-    throw new Error("Workers AI binding is not configured");
+    throw new Error("No AI provider is configured for Finder");
   }
   if (!message || !message.trim()) {
     throw new Error("Message is required");
@@ -54,7 +54,7 @@ export async function askAssistant(env, studentContext, history, message) {
     try {
       fullText = await runModel(env, FALLBACK_MODEL, messages);
     } catch (fallbackErr) {
-      throw new Error(`Workers AI error: ${fallbackErr.message}`);
+      throw new Error(`AI provider error: ${fallbackErr.message}`);
     }
   }
   if (!fullText) {

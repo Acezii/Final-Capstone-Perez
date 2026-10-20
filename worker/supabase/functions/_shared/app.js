@@ -20,12 +20,11 @@ function err(message, status = 400) {
   return json({ error: message }, status);
 }
 
-// Use Supabase when its secrets are configured; otherwise fall back to the D1 binding.
 function getDb(env) {
-  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
-    return new SupabaseDb(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
   }
-  return env.DB;
+  return new SupabaseDb(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 async function loadCurriculum(db) {
@@ -217,14 +216,15 @@ async function handleImportGrades(db, text, adminId) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const path = url.pathname;
-    const db = getDb(env);
+    // Edge Functions may see the full /functions/v1 prefix; routes are matched from /api.
+    const path = url.pathname.replace(/^\/functions\/v1(?=\/api\/)/, "");
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS_HEADERS });
     }
 
     try {
+      const db = getDb(env);
       if (path === "/api/auth/student/login" && request.method === "POST") {
         const { studentNumber, password } = await request.json();
         const student = await db.prepare("SELECT * FROM students WHERE student_number = ?").bind(studentNumber).first();
@@ -634,13 +634,4 @@ export default {
     }
   },
 
-  async scheduled(event, env) {
-    const db = getDb(env);
-    await db
-      .prepare(
-        `UPDATE ai_conversations SET status = 'closed', closed_at = datetime('now'), closed_reason = 'auto_closed_end_of_day'
-         WHERE status = 'open' AND datetime(created_at) < datetime('now', '-12 hours')`
-      )
-      .run();
-  },
 };
