@@ -1,6 +1,7 @@
 import { hashPassword, verifyPassword, signToken, requireAuth, generateQrToken } from "./auth.js";
 import { kahnOrder, greedySchedule, eligibleSubjects, termBuilderEligibleSubjects } from "./scheduling.js";
 import { askAssistant } from "./ai.js";
+import { SupabaseDb } from "./supabase-db.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,14 @@ function json(data, status = 200) {
 
 function err(message, status = 400) {
   return json({ error: message }, status);
+}
+
+// Use Supabase when its secrets are configured; otherwise fall back to the D1 binding.
+function getDb(env) {
+  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
+    return new SupabaseDb(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  }
+  return env.DB;
 }
 
 async function loadCurriculum(db) {
@@ -209,7 +218,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const db = env.DB;
+    const db = getDb(env);
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS_HEADERS });
@@ -626,7 +635,7 @@ export default {
   },
 
   async scheduled(event, env) {
-    const db = env.DB;
+    const db = getDb(env);
     await db
       .prepare(
         `UPDATE ai_conversations SET status = 'closed', closed_at = datetime('now'), closed_reason = 'auto_closed_end_of_day'
