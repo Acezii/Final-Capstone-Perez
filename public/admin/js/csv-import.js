@@ -23,12 +23,17 @@ function wireDrop(dropEl, fileInput, browseBtn, resultEl, endpoint) {
     if (file) handleFile(file);
   });
 
+  function setResult(text, state) {
+    resultEl.textContent = text;
+    resultEl.dataset.state = state;
+  }
+
   async function handleFile(file) {
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      resultEl.textContent = "Please choose an .xlsx file.";
+      setResult("Please choose an .xlsx file.", "error");
       return;
     }
-    resultEl.textContent = "Uploading…";
+    setResult(`Uploading ${file.name}…`, "busy");
     try {
       if (!globalThis.XLSX) throw new Error("Excel support is unavailable. Refresh the page and try again.");
       const workbook = globalThis.XLSX.read(await file.arrayBuffer(), { type: "array" });
@@ -36,9 +41,13 @@ function wireDrop(dropEl, fileInput, browseBtn, resultEl, endpoint) {
       if (!firstSheet) throw new Error("The workbook does not contain a worksheet.");
       const text = globalThis.XLSX.utils.sheet_to_csv(firstSheet);
       const data = await apiPostRaw(endpoint, text, "admin");
-      resultEl.textContent = `Imported ${data.result.ok} row(s)` + (data.result.failed ? `, ${data.result.failed} failed` : "");
+      const { ok, failed } = data.result;
+      setResult(
+        `${file.name}: imported ${ok} row${ok === 1 ? "" : "s"}` + (failed ? `, ${failed} failed — check those rows' required columns` : ""),
+        failed ? (ok ? "warn" : "error") : "ok"
+      );
     } catch (e) {
-      resultEl.textContent = e.message || "Import failed";
+      setResult(e.message || "Import failed", "error");
     }
   }
 }

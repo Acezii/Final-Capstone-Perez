@@ -157,6 +157,7 @@ export function renderConstellation(svg, subjects, prereqMap, onToggle) {
     g.appendChild(el("rect", { class: "cg-chip", width: NODE_W, height: NODE_H, rx: 8 }));
     g.appendChild(el("text", { class: "cg-code", x: NODE_W / 2, y: NODE_H / 2 + 0.5, "text-anchor": "middle", "dominant-baseline": "middle" }, s.code));
     g.appendChild(el("title", {}, `${s.code} — ${s.name}\n${s.units} units · ${s.status}`));
+    tagForFilter(g, s);
 
     const ancestors = collect(s.id, prereqMap);
     const descendants = collect(s.id, dependents);
@@ -248,6 +249,7 @@ export function renderSubjectGrid(container, subjects, onToggle) {
         row.className = s.status === "completed" ? "is-completed" : s.status === "failed" ? "is-failed" : "";
         row.tabIndex = 0;
         row.title = "Click to toggle completed";
+        tagForFilter(row, s);
         row.innerHTML = `
           <td class="col-code mono">${s.code}</td>
           <td>${s.name}</td>
@@ -266,5 +268,132 @@ export function renderSubjectGrid(container, subjects, onToggle) {
       section.appendChild(table);
     });
     container.appendChild(section);
+  });
+}
+
+const STATUS_ORDER = [
+  ["completed", "Completed"],
+  ["eligible", "Eligible now"],
+  ["locked", "Locked"],
+  ["failed", "Failed"],
+];
+
+function unitsOf(subjects) {
+  return subjects.reduce((sum, s) => sum + Number(s.units || 0), 0);
+}
+
+function statusGroup(s) {
+  return ["completed", "eligible", "failed"].includes(s.status) ? s.status : "locked";
+}
+
+function tagForFilter(node, s) {
+  node.dataset.status = statusGroup(s);
+  node.dataset.search = `${s.code} ${s.name}`.toLowerCase();
+}
+
+export function countByStatus(subjects) {
+  const counts = { all: subjects.length, completed: 0, eligible: 0, locked: 0, failed: 0 };
+  subjects.forEach((s) => counts[statusGroup(s)]++);
+  return counts;
+}
+
+// Hides non-matching table rows (and emptied terms/years) and dims non-matching map nodes.
+// Returns the number of matching subjects.
+export function applySubjectFilter(grid, svg, query, status) {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const active = terms.length > 0 || status !== "all";
+  const matches = (node) =>
+    (status === "all" || node.dataset.status === status) &&
+    terms.every((t) => node.dataset.search.includes(t));
+
+  let count = 0;
+  grid.querySelectorAll("tr[data-search]").forEach((row) => {
+    const hit = matches(row);
+    row.hidden = !hit;
+    if (hit) count++;
+  });
+  grid.querySelectorAll(".term-table").forEach((table) => {
+    table.hidden = !table.querySelector("tr[data-search]:not([hidden])");
+  });
+  grid.querySelectorAll(".year-block").forEach((block) => {
+    block.hidden = !block.querySelector(".term-table:not([hidden])");
+  });
+
+  svg.classList.toggle("is-filtering", active);
+  svg.querySelectorAll(".cg-node").forEach((node) => node.classList.toggle("is-match", active && matches(node)));
+  return count;
+}
+
+// Stacked units-by-status bar plus its legend.
+export function renderStatusBar(bar, legend, subjects) {
+  bar.innerHTML = "";
+  legend.innerHTML = "";
+  STATUS_ORDER.forEach(([status, label]) => {
+    const group = subjects.filter((s) => statusGroup(s) === status);
+    const units = unitsOf(group);
+    if (units) {
+      const seg = document.createElement("span");
+      seg.className = `status-seg seg-${status}`;
+      seg.style.flexGrow = units;
+      seg.title = `${label}: ${units} units`;
+      bar.appendChild(seg);
+    }
+    if (units || status !== "failed") {
+      const item = document.createElement("div");
+      item.className = "legend-item";
+      item.innerHTML = `<span class="legend-dot dot-${status}"></span>${label}<b>${units}u</b>`;
+      legend.appendChild(item);
+    }
+  });
+}
+
+// Year-by-term roadmap: one card per year, one progress row per term.
+export function renderRoadmap(container, subjects) {
+  container.innerHTML = "";
+  let nextMarked = false;
+  groupByTerm(subjects).forEach(({ year, terms }) => {
+    const yearSubjects = terms.flatMap((t) => t.subjects);
+    const yearTotal = unitsOf(yearSubjects);
+    const yearDone = unitsOf(yearSubjects.filter((s) => s.status === "completed"));
+    const yearPct = yearTotal ? Math.round((yearDone / yearTotal) * 100) : 0;
+
+    const card = document.createElement("section");
+    card.className = "roadmap-year card";
+    card.innerHTML = `
+      <header class="roadmap-head">
+        <h3>${yearLabel(year)}</h3>
+        <span class="term-meta mono">${yearDone}/${yearTotal} units · ${yearPct}%</span>
+      </header>
+    `;
+
+    terms.forEach(({ sem, subjects: termSubjects }) => {
+      const total = unitsOf(termSubjects);
+      const done = unitsOf(termSubjects.filter((s) => s.status === "completed"));
+      const failed = termSubjects.filter((s) => s.status === "failed").length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const complete = total > 0 && done === total;
+      let state = complete ? "is-complete" : "";
+      let tag = complete ? `<span class="term-tag tag-done">Done</span>` : "";
+      if (!complete && !nextMarked) {
+        nextMarked = true;
+        state = "is-next";
+        tag = `<span class="term-tag tag-next">Up next</span>`;
+      }
+      if (failed) tag += `<span class="term-tag tag-failed">${failed} failed</span>`;
+
+      const row = document.createElement("div");
+      row.className = `roadmap-term ${state}`;
+      row.innerHTML = `
+        <div class="roadmap-label">
+          <span class="mono">Y${year}S${sem}</span>
+          <span>${semesterLabel(sem)}</span>
+          ${tag}
+        </div>
+        <div class="roadmap-bar"><span style="width:${pct}%"></span></div>
+        <div class="roadmap-count mono">${done}/${total}u</div>
+      `;
+      card.appendChild(row);
+    });
+    container.appendChild(card);
   });
 }

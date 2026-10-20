@@ -83,6 +83,7 @@ initScanner(
     canvas: document.getElementById("scanCanvas"),
     startBtn: document.getElementById("startScanBtn"),
     stopBtn: document.getElementById("stopScanBtn"),
+    cameraSelect: document.getElementById("cameraSelect"),
     statusEl: document.getElementById("scanStatus"),
     manualInput: document.getElementById("manualToken"),
     manualBtn: document.getElementById("manualLookupBtn"),
@@ -101,28 +102,58 @@ document.getElementById("newScanBtn").addEventListener("click", () => {
   document.getElementById("manualToken").value = "";
 });
 
+const rosterSearch = document.getElementById("rosterSearch");
+const rosterCount = document.getElementById("rosterCount");
+
+function filterRoster() {
+  const terms = rosterSearch.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const rows = document.querySelectorAll("#rosterBody tr[data-search]");
+  let shown = 0;
+  rows.forEach((row) => {
+    const hit = terms.every((t) => row.dataset.search.includes(t));
+    row.hidden = !hit;
+    if (hit) shown++;
+  });
+  document.getElementById("rosterNoMatch")?.toggleAttribute("hidden", shown > 0 || rows.length === 0);
+  rosterCount.textContent = rows.length ? (terms.length ? `${shown} of ${rows.length}` : `${rows.length} students`) : "";
+}
+
+rosterSearch.addEventListener("input", filterRoster);
+rosterSearch.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    rosterSearch.value = "";
+    filterRoster();
+  }
+});
+
 async function loadRoster() {
   const tbody = document.getElementById("rosterBody");
   try {
     const data = await apiGet("/api/admin/students", "admin");
     if (data.students.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No students yet — import a roster above.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No students yet — import a roster above.</td></tr>';
+      rosterCount.textContent = "";
       return;
     }
-    tbody.innerHTML = data.students
-      .map(
-        (s) => `
-      <tr>
-        <td class="mono">${s.student_number}</td>
-        <td>${s.last_name}, ${s.first_name}</td>
-        <td>${s.year_level}</td>
+    tbody.innerHTML =
+      data.students
+        .map((s) => {
+          const standing = [s.is_irregular ? "Irregular" : "Regular", s.is_shifter ? "Shifter" : ""].filter(Boolean);
+          return `
+      <tr data-search="${`${s.student_number} ${s.first_name} ${s.last_name} ${s.program}`.toLowerCase()}">
+        <td class="mono col-num">${s.student_number}</td>
+        <td><b>${s.last_name}</b>, ${s.first_name}</td>
+        <td class="mono col-center">Y${s.year_level}</td>
         <td>${s.program}</td>
+        <td>${standing.map((t) => `<span class="standing-tag${t === "Regular" ? "" : " is-flag"}">${t}</span>`).join("")}</td>
         <td><span class="pill pill-${s.status === "active" ? "completed" : "locked"}">${s.status}</span></td>
-      </tr>`
-      )
-      .join("");
+      </tr>`;
+        })
+        .join("") +
+      '<tr id="rosterNoMatch" hidden><td colspan="6" class="empty-state">No students match your search.</td></tr>';
+    filterRoster();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${e.message || "Couldn't load roster"}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message || "Couldn't load roster"}</td></tr>`;
   }
 }
 
@@ -149,6 +180,7 @@ initConcerns({
   listEl: document.getElementById("concernList"),
   filterBtns: concernFilterBtns,
   countBadge: document.getElementById("concernCount"),
+  refreshBtn: document.getElementById("concernRefresh"),
 });
 
 if ("serviceWorker" in navigator) {

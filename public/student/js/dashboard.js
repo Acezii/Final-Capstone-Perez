@@ -1,5 +1,5 @@
 import { apiGet, apiPost, getToken, clearToken, isOnline, flushOutbox } from "/shared/js/api.js";
-import { renderConstellation, renderSubjectGrid } from "/student/js/pathfinder.js";
+import { renderConstellation, renderSubjectGrid, renderStatusBar, renderRoadmap, yearLabel, countByStatus, applySubjectFilter } from "/student/js/pathfinder.js";
 import { renderChips, currentUnits, renderUnitMeter, renderSchedule } from "/student/js/scheduler.js";
 import { renderQr } from "/student/js/qr-card.js";
 import { initChat } from "/student/js/ai-chat.js";
@@ -117,6 +117,8 @@ async function loadProgress() {
     const svg = document.getElementById("constellation");
     renderConstellation(svg, subjects, prereqMap, toggleCompleted);
     renderSubjectGrid(document.getElementById("subjectGrid"), subjects, toggleCompleted);
+    updateFilterCounts(subjects);
+    runFilter();
 
     document.getElementById("statCompletedUnits").textContent = data.progress.completedUnits;
     document.getElementById("statRemainingUnits").textContent = data.progress.remainingUnits;
@@ -127,6 +129,14 @@ async function loadProgress() {
     const ring = document.getElementById("ringFill");
     ring.setAttribute("stroke-dasharray", c);
     ring.setAttribute("stroke-dashoffset", c - (data.progress.percentComplete / 100) * c);
+
+    const p = data.progress;
+    document.getElementById("progressHeadline").textContent = `${p.completedUnits} of ${p.totalUnits} units earned`;
+    document.getElementById("progressSub").textContent = p.remainingUnits
+      ? `≈ ${p.estSemesters} semester${p.estSemesters === 1 ? "" : "s"} to go at 18 units/term`
+      : "All program units completed";
+    renderStatusBar(document.getElementById("statusBar"), document.getElementById("statusLegend"), subjects);
+    renderRoadmap(document.getElementById("roadmap"), subjects);
 
     renderChips(
       document.getElementById("eligibleChips"),
@@ -143,6 +153,62 @@ async function loadProgress() {
   }
 }
 
+const searchInput = document.getElementById("subjectSearch");
+const statusFilter = document.getElementById("statusFilter");
+let filterStatus = "all";
+
+function updateFilterCounts(subjects) {
+  const counts = countByStatus(subjects);
+  statusFilter.querySelectorAll("[data-count]").forEach((n) => (n.textContent = counts[n.dataset.count]));
+}
+
+function runFilter() {
+  const total = Object.keys(subjectsById).length;
+  const shown = applySubjectFilter(
+    document.getElementById("subjectGrid"),
+    document.getElementById("constellation"),
+    searchInput.value,
+    filterStatus
+  );
+  const active = searchInput.value.trim() || filterStatus !== "all";
+  document.getElementById("filterResult").textContent = active ? `${shown} of ${total} subjects` : "";
+  document.getElementById("filterEmpty").hidden = !(active && shown === 0);
+}
+
+function setFilterStatus(status) {
+  filterStatus = status;
+  statusFilter.querySelectorAll(".filter-chip").forEach((chip) => {
+    const on = chip.dataset.status === status;
+    chip.classList.toggle("selected", on);
+    chip.setAttribute("aria-pressed", on);
+  });
+  runFilter();
+}
+
+searchInput.addEventListener("input", runFilter);
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    searchInput.value = "";
+    runFilter();
+  }
+});
+statusFilter.addEventListener("click", (e) => {
+  const chip = e.target.closest(".filter-chip");
+  if (chip) setFilterStatus(chip.dataset.status);
+});
+document.getElementById("filterClear").addEventListener("click", () => {
+  searchInput.value = "";
+  setFilterStatus("all");
+  searchInput.focus();
+});
+document.addEventListener("keydown", (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
+  if (e.key === "/" && !typing && document.getElementById("tab-eligibility").classList.contains("active")) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
 async function toggleCompleted(subjectId) {
   const s = subjectsById[subjectId];
   if (!s) return;
@@ -157,6 +223,8 @@ async function toggleCompleted(subjectId) {
       showToast(`${s.code} update saved — will sync when you're back online`);
       s.status = nextStatus === "not_taken" ? "locked" : "completed";
       renderSubjectGrid(document.getElementById("subjectGrid"), Object.values(subjectsById), toggleCompleted);
+      updateFilterCounts(Object.values(subjectsById));
+      runFilter();
       return;
     }
     showToast(nextStatus === "completed" ? `${s.code} marked complete` : `${s.code} marked incomplete`);
@@ -223,6 +291,9 @@ async function loadQr() {
     const data = await apiGet("/api/students/me/qr", "student");
     document.getElementById("qrName").textContent = `${profile.firstName || ""} ${profile.lastName || ""}`.trim();
     document.getElementById("qrNumber").textContent = data.studentNumber;
+    document.getElementById("qrYear").textContent = yearLabel(Number(profile.yearLevel) || 1);
+    document.getElementById("qrStanding").textContent =
+      [profile.isIrregular ? "Irregular" : "Regular", profile.isShifter ? "Shifter" : ""].filter(Boolean).join(" · ");
     renderQr(document.getElementById("qrBox"), data.qrToken);
     qrLoaded = true;
   } catch (e) {

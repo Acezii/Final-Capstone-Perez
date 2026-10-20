@@ -55,25 +55,56 @@
   </div>
   <div class="scan-layout">
     <div class="card scanner-card">
-      <video id="scanVideo" autoplay playsinline muted></video>
-      <canvas id="scanCanvas" hidden></canvas>
-      <div class="scanner-overlay"><div class="scan-frame"></div></div>
-      <div class="scanner-controls">
-        <button class="btn" id="startScanBtn">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M23 7v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-          Start camera
-        </button>
-        <button class="btn-ghost" id="stopScanBtn" hidden>Stop</button>
-        <span class="scan-status" id="scanStatus"></span>
-      </div>
-      <div class="manual-entry">
-        <input type="text" id="manualToken" placeholder="Or type a QR token manually, e.g. UDM-XXXXXXXX">
-        <button class="btn-ghost btn-sm" id="manualLookupBtn">Look up</button>
+      <header class="scanner-head">
+        <span class="mono">Camera · QR scanner</span>
+        <span class="scan-tag tag-idle">Idle</span>
+        <span class="scan-tag tag-live"><i></i>Live</span>
+      </header>
+      <div class="scanner-body">
+        <div class="scan-viewport">
+          <video id="scanVideo" autoplay playsinline muted></video>
+          <canvas id="scanCanvas" hidden></canvas>
+          <div class="scan-placeholder">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M23 7v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <span>Camera is off</span>
+            <small>Start the camera, then hold the student's QR ID inside the frame.</small>
+          </div>
+          <div class="scanner-overlay" aria-hidden="true">
+            <div class="scan-frame"><i></i><i></i><i></i><i></i><span class="scan-line"></span></div>
+          </div>
+        </div>
+        <div class="scanner-controls">
+          <button class="btn" id="startScanBtn">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M23 7v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            Start camera
+          </button>
+          <button class="btn-ghost" id="stopScanBtn" hidden>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+            Stop
+          </button>
+          <select class="camera-select" id="cameraSelect" aria-label="Camera" hidden></select>
+        </div>
+        <p class="scan-status" id="scanStatus" aria-live="polite"></p>
+        <div class="manual-entry">
+          <label for="manualToken" class="manual-label mono">Manual lookup</label>
+          <div class="manual-row">
+            <input type="text" id="manualToken" placeholder="UDM-XXXXXXXXXXXXXXXXXXXXXXXX" autocomplete="off" spellcheck="false">
+            <button class="btn-ghost" id="manualLookupBtn">Look up</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="card eval-card" id="evalCard">
-      <div class="empty-state" id="evalEmpty">Scan or look up a student to view their evaluation here.</div>
+      <div class="eval-empty" id="evalEmpty">
+        <h3>No student loaded</h3>
+        <p>Their curriculum evaluation will appear here, ready to print.</p>
+        <ol class="eval-steps">
+          <li><span class="step-n mono">1</span><div>Ask the student to open <b>My QR ID</b> in Path·Finder.<small>It works on their phone even when offline.</small></div></li>
+          <li><span class="step-n mono">2</span><div>Hold their code inside the frame on the left.<small>It's read automatically — no button to press.</small></div></li>
+          <li><span class="step-n mono">3</span><div>Review, print, or scan the next student.<small>Can't scan? Type the token under Manual lookup.</small></div></li>
+        </ol>
+      </div>
       <div id="evalContent" hidden>
         <div class="eval-print-area" id="evalPrintArea"></div>
         <div class="eval-actions">
@@ -95,39 +126,80 @@
     <p>Drop an Excel workbook or pick a file. Use the first worksheet for student details, subject code, name, units, year_level, sem, prerequisites, or grades with student_number, subject_code, grade, and optional term.</p>
   </div>
   <div class="import-grid">
-    <div class="card import-drop" id="studentDrop" data-kind="students">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
-      <h3>Students Excel</h3>
-      <p>Drag a file here or</p>
-      <input type="file" id="studentFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-      <button class="btn-ghost btn-sm" id="studentBrowseBtn">Choose file</button>
-      <div class="import-result" id="studentImportResult"></div>
+    <div class="card import-card">
+      <header class="import-head">
+        <span class="step-n mono">1</span>
+        <h3>Students</h3>
+        <span class="import-dep mono">Import first</span>
+      </header>
+      <div class="import-drop" id="studentDrop" data-kind="students">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+        <p><b>Drop an .xlsx file here</b><br>or</p>
+        <input type="file" id="studentFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <button class="btn-ghost btn-sm" id="studentBrowseBtn">Choose file</button>
+      </div>
+      <div class="import-cols">
+        <span class="import-cols-label mono">Columns</span>
+        <div class="col-chips"><code class="col-chip is-req">student_number</code><code class="col-chip is-req">first_name</code><code class="col-chip is-req">last_name</code><code class="col-chip">email</code><code class="col-chip">program</code><code class="col-chip">year_level</code><code class="col-chip">password</code></div>
+      </div>
+      <p class="import-result" id="studentImportResult" aria-live="polite"></p>
     </div>
-    <div class="card import-drop" id="subjectDrop" data-kind="subjects">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
-      <h3>Subjects Excel</h3>
-      <p>Drag a file here or</p>
-      <input type="file" id="subjectFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-      <button class="btn-ghost btn-sm" id="subjectBrowseBtn">Choose file</button>
-      <div class="import-result" id="subjectImportResult"></div>
+    <div class="card import-card">
+      <header class="import-head">
+        <span class="step-n mono">2</span>
+        <h3>Subjects</h3>
+        <span class="import-dep mono">Curriculum</span>
+      </header>
+      <div class="import-drop" id="subjectDrop" data-kind="subjects">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+        <p><b>Drop an .xlsx file here</b><br>or</p>
+        <input type="file" id="subjectFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <button class="btn-ghost btn-sm" id="subjectBrowseBtn">Choose file</button>
+      </div>
+      <div class="import-cols">
+        <span class="import-cols-label mono">Columns</span>
+        <div class="col-chips"><code class="col-chip is-req">code</code><code class="col-chip is-req">name</code><code class="col-chip">units</code><code class="col-chip">year_level</code><code class="col-chip">sem</code><code class="col-chip">prerequisites</code></div>
+      </div>
+      <p class="import-result" id="subjectImportResult" aria-live="polite"></p>
     </div>
-    <div class="card import-drop" id="gradesDrop" data-kind="grades">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
-      <h3>Grades Excel</h3>
-      <p>student_number, subject_code, grade</p>
-      <input type="file" id="gradesFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-      <button class="btn-ghost btn-sm" id="gradesBrowseBtn">Choose file</button>
-      <div class="import-result" id="gradesImportResult"></div>
+    <div class="card import-card">
+      <header class="import-head">
+        <span class="step-n mono">3</span>
+        <h3>Grades</h3>
+        <span class="import-dep mono">Needs 1 & 2</span>
+      </header>
+      <div class="import-drop" id="gradesDrop" data-kind="grades">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+        <p><b>Drop an .xlsx file here</b><br>or</p>
+        <input type="file" id="gradesFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <button class="btn-ghost btn-sm" id="gradesBrowseBtn">Choose file</button>
+      </div>
+      <div class="import-cols">
+        <span class="import-cols-label mono">Columns</span>
+        <div class="col-chips"><code class="col-chip is-req">student_number</code><code class="col-chip is-req">subject_code</code><code class="col-chip is-req">grade</code><code class="col-chip">term</code></div>
+      </div>
+      <p class="import-result" id="gradesImportResult" aria-live="polite"></p>
     </div>
   </div>
-  <div class="panel-head" style="margin-top:36px;">
-    <p class="panel-tag">Roster</p>
-    <h2>Current students</h2>
+  <p class="import-hint"><span class="col-chip is-req">bold</span> columns are required. Only the first worksheet is read. Separate multiple prerequisites with a semicolon, e.g. <code>CC101;CC102</code>.</p>
+
+  <div class="roster-head">
+    <div>
+      <p class="panel-tag">Roster</p>
+      <h2>Current students</h2>
+    </div>
+    <div class="roster-tools">
+      <label class="search-field">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input type="search" id="rosterSearch" placeholder="Search name or student no." autocomplete="off" aria-label="Search students">
+      </label>
+      <span class="roster-count mono" id="rosterCount"></span>
+    </div>
   </div>
   <div class="card roster-table-wrap">
     <table class="roster-table" id="rosterTable">
-      <thead><tr><th>Student no.</th><th>Name</th><th>Year</th><th>Program</th><th>Status</th></tr></thead>
-      <tbody id="rosterBody"><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody>
+      <thead><tr><th>Student no.</th><th>Name</th><th class="col-center">Year</th><th>Program</th><th>Standing</th><th>Status</th></tr></thead>
+      <tbody id="rosterBody"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
     </table>
   </div>
 </section>
@@ -138,9 +210,15 @@
     <h2>Concerns forwarded by the Path-Finder assistant</h2>
     <p>When the assistant can't resolve a student's question on its own, it lands here. Mark a concern resolved to close the loop and notify the student's chat.</p>
   </div>
-  <div class="concern-tabs">
-    <button class="concern-filter active" data-status="open">Open</button>
-    <button class="concern-filter" data-status="resolved">Resolved</button>
+  <div class="concern-toolbar">
+    <div class="concern-tabs" role="group" aria-label="Filter concerns">
+      <button class="concern-filter active" data-status="open" aria-pressed="true"><span class="legend-dot dot-open"></span>Open <span class="mono" data-count="open">–</span></button>
+      <button class="concern-filter" data-status="resolved" aria-pressed="false"><span class="legend-dot dot-resolved"></span>Resolved <span class="mono" data-count="resolved">–</span></button>
+    </div>
+    <button class="btn-ghost btn-sm" id="concernRefresh">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
+      Refresh
+    </button>
   </div>
   <div class="concern-list" id="concernList"><div class="empty-state">Loading…</div></div>
 </section>

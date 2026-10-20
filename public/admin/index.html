@@ -91,29 +91,9 @@ registerForm.addEventListener("submit", async (e) => {
   registerBtn.disabled = true;
   registerBtn.textContent = "Registering…";
   try {
-    let adminToken = getToken("admin");
-    if (!adminToken) {
-      try {
-        const loginData = await apiPost(
-          "/api/auth/admin/login",
-          {
-            username: document.getElementById("username").value.trim(),
-            password: document.getElementById("password").value,
-          },
-          "admin",
-          { noQueue: true }
-        );
-        adminToken = loginData.token;
-        setToken("admin", adminToken);
-      } catch {
-        adminToken = "";
-      }
-    }
-    const headers = { "Content-Type": "application/json" };
-    if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
     const data = await fetch("/api/superadmin/admins", {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: document.getElementById("registerUsername").value.trim(),
         fullName: document.getElementById("registerFullName").value.trim(),

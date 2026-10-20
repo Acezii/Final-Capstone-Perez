@@ -1,4 +1,4 @@
-const CACHE_NAME = "pathfinder-shell-v7";
+const CACHE_NAME = "pathfinder-shell-v20";
 const SHELL_FILES = [
   "/",
   "/offline.html",
@@ -74,6 +74,24 @@ self.addEventListener("fetch", (event) => {
           const cached = await caches.match(event.request);
           return cached || (await caches.match("/offline.html")) || Response.error();
         })
+    );
+    return;
+  }
+
+  // Our own files are network-first so code changes show up on the next load;
+  // third-party assets (fonts, CDN scripts) stay cache-first.
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request)
+        .then(async (response) => {
+          const safe = await safeResponse(response);
+          if (safe.ok) {
+            const clone = safe.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return safe;
+        })
+        .catch(async () => (await caches.match(event.request)) || (await caches.match("/offline.html")) || Response.error())
     );
     return;
   }

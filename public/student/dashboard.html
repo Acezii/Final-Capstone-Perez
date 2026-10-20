@@ -63,9 +63,9 @@
 <main>
 <section class="panel tab-panel active" id="tab-eligibility">
   <div class="panel-head">
-    <p class="panel-tag">01 — Eligibility Engine</p>
-    <h2>Kahn's algorithm, applied to your transcript</h2>
-    <p>Tap any node in the map, or a card below, to mark a subject complete. Status recomputes instantly — including cascading locks if you undo a prerequisite something else depends on.</p>
+    <p class="panel-tag">01 — Eligibility</p>
+    <h2>What you can take next</h2>
+    <p>Click a subject in the map or the tables to mark it complete. Everything it unlocks updates right away.</p>
   </div>
   <div class="hero-graph card">
     <svg id="constellation" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -76,15 +76,31 @@
     <div class="legend-item"><span class="legend-dot dot-locked"></span>Locked</div>
     <div class="legend-item"><span class="legend-dot dot-failed"></span>Failed</div>
   </div>
-  <p class="graph-hint">Hover or tab to a subject to trace its prerequisite chain. Arrows point from a prerequisite to the subject it unlocks.</p>
+  <p class="graph-hint">Hover a subject to trace its prerequisites. Arrows point to the subjects it unlocks.</p>
+  <div class="subject-filter">
+    <label class="search-field">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="search" id="subjectSearch" placeholder="Search by code or subject name" autocomplete="off" aria-label="Search subjects">
+      <kbd class="mono">/</kbd>
+    </label>
+    <div class="filter-chips" id="statusFilter" role="group" aria-label="Filter by status">
+      <button type="button" class="filter-chip selected" data-status="all" aria-pressed="true">All <span class="mono" data-count="all">0</span></button>
+      <button type="button" class="filter-chip" data-status="completed" aria-pressed="false"><span class="legend-dot dot-completed"></span>Completed <span class="mono" data-count="completed">0</span></button>
+      <button type="button" class="filter-chip" data-status="eligible" aria-pressed="false"><span class="legend-dot dot-eligible"></span>Eligible <span class="mono" data-count="eligible">0</span></button>
+      <button type="button" class="filter-chip" data-status="locked" aria-pressed="false"><span class="legend-dot dot-locked"></span>Locked <span class="mono" data-count="locked">0</span></button>
+      <button type="button" class="filter-chip" data-status="failed" aria-pressed="false"><span class="legend-dot dot-failed"></span>Failed <span class="mono" data-count="failed">0</span></button>
+    </div>
+    <p class="filter-result mono" id="filterResult" aria-live="polite"></p>
+  </div>
   <div class="subject-grid" id="subjectGrid"></div>
+  <div class="empty-state" id="filterEmpty" hidden>No subjects match your search. <button type="button" class="link-btn" id="filterClear">Clear filters</button></div>
 </section>
 
 <section class="panel tab-panel" id="tab-builder">
   <div class="panel-head">
-    <p class="panel-tag">02 — Term Builder</p>
-    <h2>Assemble next term, let the scheduler resolve conflicts</h2>
-    <p>Select from what you're eligible for. The server sorts every candidate section by earliest end time and greedily accepts the first non-overlapping option per subject.</p>
+    <p class="panel-tag">02 — Term builder</p>
+    <h2>Plan next term's schedule</h2>
+    <p>Pick from the subjects you're eligible for, and Path·Finder builds a timetable with no overlapping classes.</p>
   </div>
   <div class="builder-controls card">
     <div class="cap-field"><span>Unit cap</span><input type="number" id="unitCap" value="21" min="3" max="27" step="1"></div>
@@ -105,9 +121,9 @@
 
 <section class="panel tab-panel" id="tab-progress">
   <div class="panel-head">
-    <p class="panel-tag">03 — Degree Progress</p>
-    <h2>Distance to graduation, recalculated live</h2>
-    <p>Estimated remaining semesters assumes an average load of 18 units per term.</p>
+    <p class="panel-tag">03 — Progress</p>
+    <h2>How close you are to graduating</h2>
+    <p>Based on your completed units, assuming an average load of 18 units per term.</p>
   </div>
   <div class="progress-body card">
     <div class="ring-wrap">
@@ -117,28 +133,57 @@
       </svg>
       <div class="ring-center"><span class="num mono" id="ringPct">0%</span><span class="lbl">Complete</span></div>
     </div>
-    <div class="stat-grid">
-      <div class="stat-card"><div class="n mono" id="statCompletedUnits">0</div><div class="l">Units completed</div></div>
-      <div class="stat-card"><div class="n mono" id="statRemainingUnits">0</div><div class="l">Units remaining</div></div>
-      <div class="stat-card"><div class="n mono" id="statTotalUnits">0</div><div class="l">Program total</div></div>
-      <div class="stat-card"><div class="n mono" id="statSemesters">0</div><div class="l">Est. semesters left</div></div>
+    <div class="progress-main">
+      <div class="progress-headline">
+        <h3 id="progressHeadline">—</h3>
+        <span class="term-meta mono" id="progressSub"></span>
+      </div>
+      <div class="status-bar" id="statusBar" role="img" aria-label="Units by status"></div>
+      <div class="legend status-legend" id="statusLegend"></div>
+      <div class="stat-grid">
+        <div class="stat-card is-done"><div class="n mono" id="statCompletedUnits">0</div><div class="l">Units completed</div></div>
+        <div class="stat-card"><div class="n mono" id="statRemainingUnits">0</div><div class="l">Units remaining</div></div>
+        <div class="stat-card"><div class="n mono" id="statTotalUnits">0</div><div class="l">Program total</div></div>
+        <div class="stat-card is-next"><div class="n mono" id="statSemesters">0</div><div class="l">Est. semesters left</div></div>
+      </div>
     </div>
   </div>
+  <div class="roadmap" id="roadmap"></div>
 </section>
 
 <section class="panel tab-panel" id="tab-qr">
   <div class="panel-head">
     <p class="panel-tag">04 — Digital ID</p>
-    <h2>Show this at the CCS window instead of your folder</h2>
-    <p>Staff scan this code to pull your record on their end — no manual lookup, no retyping your student number.</p>
+    <h2>Your CCS digital ID</h2>
+    <p>Show this at the CCS window instead of your folder. Staff scan it to pull up your record instantly.</p>
   </div>
-  <div class="qr-wrap card">
-    <div class="qr-box" id="qrBox"></div>
-    <div class="qr-meta">
-      <div class="qr-name" id="qrName">—</div>
-      <div class="qr-number mono" id="qrNumber">—</div>
-      <p class="qr-note">This code is unique to your account. Do not share a screenshot of it with anyone outside CCS staff.</p>
+  <div class="qr-layout">
+    <div class="qr-wrap card">
+      <header class="qr-head">
+        <span class="mono">CCS · Student digital ID</span>
+        <span class="term-tag tag-done">Active</span>
+      </header>
+      <div class="qr-body">
+        <div class="qr-box" id="qrBox"></div>
+        <div class="qr-meta">
+          <div class="qr-name" id="qrName">—</div>
+          <div class="qr-number mono" id="qrNumber">—</div>
+          <dl class="qr-details">
+            <div><dt>Year level</dt><dd id="qrYear">—</dd></div>
+            <div><dt>Standing</dt><dd id="qrStanding">—</dd></div>
+          </dl>
+        </div>
+      </div>
     </div>
+    <aside class="qr-side card">
+      <h3>At the CCS window</h3>
+      <ol class="qr-steps">
+        <li><span class="qr-step-n mono">1</span><div>Open this tab and turn your screen brightness up.<small>Works offline once it has loaded at least once.</small></div></li>
+        <li><span class="qr-step-n mono">2</span><div>Hold the code steady in front of the staff scanner.<small>Your record opens on their end automatically.</small></div></li>
+        <li><span class="qr-step-n mono">3</span><div>Confirm your name and student number with staff.<small>No folder or manual lookup needed.</small></div></li>
+      </ol>
+      <p class="qr-note"><span class="log-icon">!</span>This code is unique to your account. Do not share a screenshot of it with anyone outside CCS staff.</p>
+    </aside>
   </div>
 </section>
 
