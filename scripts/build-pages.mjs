@@ -13,6 +13,10 @@ if (!API) {
   console.error("API_BASE_URL is not set. Set it to your Supabase functions URL, e.g. https://<project-ref>.supabase.co/functions/v1");
   process.exit(1);
 }
+if (!/^https:\/\/[^/\s]+/.test(API)) {
+  console.error(`API_BASE_URL must start with https:// (got "${API}")`);
+  process.exit(1);
+}
 
 const TEXT = new Set([".html", ".js", ".json", ".css"]);
 
