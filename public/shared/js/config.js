@@ -1,0 +1,1 @@
+window.PATHFINDER_API_BASE = "";

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pathfinder Superadmin</title>
+  <style>
+    :root { color-scheme: light; font-family: Arial, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f5ef; color: #1e2a20; }
+    main { width: min(560px, calc(100% - 32px)); padding: 28px; background: white; border: 1px solid #d9ded4; border-radius: 10px; box-shadow: 0 14px 35px #18281914; }
+    h1 { margin-top: 0; font-size: 24px; }
+    p { color: #5d675f; }
+    label { display: block; margin-top: 16px; font-weight: 700; font-size: 13px; }
+    input { box-sizing: border-box; width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid #c8d0c5; border-radius: 6px; font: inherit; }
+    button { width: 100%; margin-top: 22px; padding: 12px; border: 0; border-radius: 6px; background: #2d7d2b; color: white; font-weight: 700; cursor: pointer; }
+    #result { min-height: 20px; margin-top: 16px; }
+    .success { color: #216622; }
+    .error { color: #a03b2d; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Create student account</h1>
+    <p>Create a student account in the local database.</p>
+    <form id="account-form">
+      <label>Student number<input name="studentNumber" required placeholder="25-26-001"></label>
+      <label>First name<input name="firstName" required></label>
+      <label>Last name<input name="lastName" required></label>
+      <label>Email<input name="email" type="email"></label>
+      <label>Password<input name="password" type="password" required autocomplete="new-password"></label>
+      <label>Year level<input name="yearLevel" type="number" min="1" max="4" value="1" required></label>
+      <button type="submit">Create student account</button>
+    </form>
+    <div id="result" role="status"></div>
+  </main>
+  <script>
+    const form = document.querySelector("#account-form");
+    const result = document.querySelector("#result");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      result.className = "";
+      result.textContent = "Creating account...";
+      const values = Object.fromEntries(new FormData(form));
+      try {
+        const response = await fetch("/api/superadmin/students", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to create account");
+        result.className = "success";
+        result.textContent = `Created ${data.studentNumber}. The student can now sign in with the new credentials.`;
+        form.reset();
+      } catch (error) {
+        result.className = "error";
+        result.textContent = error.message;
+      }
+    });
+  </script>
+</body>
+</html>

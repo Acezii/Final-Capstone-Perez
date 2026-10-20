@@ -1,0 +1,4 @@
+student_number,first_name,last_name,email,program,year_level,is_irregular,is_shifter,password
+23-24-089,Marc,Oconer,marc.oconer@udm.edu.ph,BSIT,2,0,1,
+23-24-090,Rain,Sanao,rain.sanao@udm.edu.ph,BSIT,3,1,0,
+23-24-091,Lands,Perez,lands.perez@udm.edu.ph,BSIT,1,0,0,

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Path-Finder Staff</string>
+    <string name="title_activity_main">Path-Finder Staff</string>
+    <string name="package_name">com.pathfinder.staff</string>
+    <string name="custom_url_scheme">com.pathfinder.staff</string>
+</resources>

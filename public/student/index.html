@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Login — Path·Finder</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/css/base.css">
+</head>
+<body>
+<div class="auth-shell">
+  <div class="card auth-card">
+    <div class="brand" style="margin-bottom:22px;"><span class="brand-mark">P</span> PATH·FINDER</div>
+    <h1>Student sign in</h1>
+    <p>Use your student number and portal password.</p>
+    <div class="auth-error" id="authError"></div>
+    <form id="loginForm">
+      <div class="field">
+        <label for="studentNumber">Student number</label>
+        <input type="text" id="studentNumber" placeholder="2023-00123-MN" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-block" id="submitBtn">Sign in</button>
+    </form>
+    <div class="auth-hint">Default password is your student number unless CCS staff has set a custom one for you.</div>
+    <div class="auth-switch"><a href="/">← Back to portal selection</a></div>
+  </div>
+</div>
+<script src="/shared/js/config.js"></script>
+<script type="module">
+import { apiPost, setToken, getToken } from "/shared/js/api.js";
+
+if (getToken("student")) {
+  window.location.href = "/student/dashboard.html";
+}
+
+const form = document.getElementById("loginForm");
+const errorBox = document.getElementById("authError");
+const submitBtn = document.getElementById("submitBtn");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errorBox.classList.remove("show");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Signing in…";
+  try {
+    const studentNumber = document.getElementById("studentNumber").value.trim();
+    const password = document.getElementById("password").value;
+    const data = await apiPost("/api/auth/student/login", { studentNumber, password }, "student", { noQueue: true });
+    setToken("student", data.token);
+    localStorage.setItem("pf_student_profile", JSON.stringify(data.student));
+    window.location.href = "/student/dashboard.html";
+  } catch (err) {
+    errorBox.textContent = err.message || "Unable to sign in. Check your connection and try again.";
+    errorBox.classList.add("show");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Sign in";
+  }
+});
+</script>
+</body>
+</html>

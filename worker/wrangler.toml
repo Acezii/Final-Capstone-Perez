@@ -1,0 +1,17 @@
+name = "udm-pathfinder-api"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "udm_pathfinder"
+database_id = "e1beed1f-4e2c-4d23-8920-71b50442f087"
+
+[ai]
+binding = "AI"
+
+[triggers]
+crons = ["0 22 * * *"]
+
+[vars]
+APP_SECRET = "9172470d4435b47873f1ec8b2816ec7cef0e335f9355f7a716414739d819c8f2"

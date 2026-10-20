@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "dev:local": "npm --prefix worker run dev:local",
+    "start": "npm --prefix worker run dev:local"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "svgexport": "^0.4.2"
+  }
+}

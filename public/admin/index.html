@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Login — Path·Finder</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/css/base.css">
+</head>
+<body>
+<div class="auth-shell">
+  <div class="card auth-card">
+    <div class="brand" style="margin-bottom:22px;"><span class="brand-mark">P</span> PATH·FINDER</div>
+    <h1>CCS staff sign in</h1>
+    <p>For registrar and department staff accounts only.</p>
+    <div class="auth-error" id="authError"></div>
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="ccsadmin" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-block" id="submitBtn">Sign in</button>
+    </form>
+    <details style="margin-top:24px;">
+      <summary>Register staff account</summary>
+      <form id="registerForm" style="margin-top:16px;">
+        <div class="field">
+          <label for="registerUsername">Username</label>
+          <input type="text" id="registerUsername" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="registerFullName">Full name</label>
+          <input type="text" id="registerFullName" required>
+        </div>
+        <div class="field">
+          <label for="registerPassword">Password</label>
+          <input type="password" id="registerPassword" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-block" id="registerBtn">Register</button>
+        <div class="auth-error" id="registerError"></div>
+      </form>
+    </details>
+    <div class="auth-switch"><a href="/">← Back to portal selection</a></div>
+  </div>
+</div>
+<script src="/shared/js/config.js"></script>
+<script type="module">
+import { apiPost, setToken, getToken } from "/shared/js/api.js";
+
+if (getToken("admin")) {
+  window.location.href = "/admin/dashboard.html";
+}
+
+const form = document.getElementById("loginForm");
+const errorBox = document.getElementById("authError");
+const submitBtn = document.getElementById("submitBtn");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errorBox.classList.remove("show");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Signing in…";
+  try {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const data = await apiPost("/api/auth/admin/login", { username, password }, "admin", { noQueue: true });
+    setToken("admin", data.token);
+    localStorage.setItem("pf_admin_profile", JSON.stringify(data.admin));
+    window.location.href = "/admin/dashboard.html";
+  } catch (err) {
+    errorBox.textContent = err.message || "Unable to sign in. Check your connection and try again.";
+    errorBox.classList.add("show");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Sign in";
+  }
+});
+
+const registerForm = document.getElementById("registerForm");
+const registerError = document.getElementById("registerError");
+const registerBtn = document.getElementById("registerBtn");
+registerForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  registerError.classList.remove("show");
+  registerBtn.disabled = true;
+  registerBtn.textContent = "Registering…";
+  try {
+    let adminToken = getToken("admin");
+    if (!adminToken) {
+      try {
+        const loginData = await apiPost(
+          "/api/auth/admin/login",
+          {
+            username: document.getElementById("username").value.trim(),
+            password: document.getElementById("password").value,
+          },
+          "admin",
+          { noQueue: true }
+        );
+        adminToken = loginData.token;
+        setToken("admin", adminToken);
+      } catch {
+        adminToken = "";
+      }
+    }
+    const headers = { "Content-Type": "application/json" };
+    if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+    const data = await fetch("/api/superadmin/admins", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        username: document.getElementById("registerUsername").value.trim(),
+        fullName: document.getElementById("registerFullName").value.trim(),
+        password: document.getElementById("registerPassword").value,
+      }),
+    });
+    const result = await data.json();
+    if (!data.ok) throw new Error(result.error || "Unable to register account");
+    registerError.textContent = `Registered ${result.username}. You can now sign in above.`;
+    registerError.classList.add("show");
+    registerForm.reset();
+  } catch (err) {
+    registerError.textContent = err.message || "Unable to register account.";
+    registerError.classList.add("show");
+  } finally {
+    registerBtn.disabled = false;
+    registerBtn.textContent = "Register";
+  }
+});
+</script>
+</body>
+</html>

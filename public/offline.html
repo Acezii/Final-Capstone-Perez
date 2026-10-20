@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offline — Path·Finder</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/css/base.css">
+<style>
+.offline-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;}
+.offline-box{max-width:380px;padding:36px 30px;}
+.offline-box svg{width:44px;height:44px;stroke:var(--text-muted);margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="offline-wrap">
+  <div class="card offline-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 9a17 17 0 0 1 22 0M5 13a11 11 0 0 1 14 0M9 17a5 5 0 0 1 6 0"></path><circle cx="12" cy="21" r="0.6" fill="currentColor" stroke="none"></circle><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+    <h1>You're offline</h1>
+    <p style="color:var(--text-muted);font-size:13.5px;margin:10px 0 20px;">This page hasn't been cached yet on this device. Your previously viewed dashboards, curriculum data, and pending updates will sync automatically once you're back online.</p>
+    <button class="btn btn-block" onclick="location.reload()">Try again</button>
+  </div>
+</div>
+</body>
+</html>

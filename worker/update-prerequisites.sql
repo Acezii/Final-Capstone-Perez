@@ -1,0 +1,22 @@
+DELETE FROM prerequisites WHERE subject_id IS NOT NULL;
+
+INSERT INTO prerequisites (subject_id, prerequisite_id) VALUES
+('PE102','PE101'),
+('PE103','PE102'),
+('PE104','PE103'),
+('NST102','NST101'),
+('ITE113','ITE112'),
+('ITE231','ITE113'),
+('ITE231','ITE115'),
+('ITE221','ITE114'),
+('ITE216','ITE112'),
+('ITE223','ITE231'),
+('ITE234','ITE221'),
+('ITE324','ITE321'),
+('ITE325','ITE322'),
+('ITE326','ITE331'),
+('ITE327','ITE321'),
+('ITE328','ITE341'),
+('ITE431','ITE327'),
+('ITE422','ITE326'),
+('ITE441','SSP101');

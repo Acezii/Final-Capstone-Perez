@@ -1,0 +1,11 @@
+{
+  "name": "Path-Finder — UDM CCS Academic Pathfinder",
+  "short_name": "Path-Finder",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F6F1",
+  "theme_color": "#25671E",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

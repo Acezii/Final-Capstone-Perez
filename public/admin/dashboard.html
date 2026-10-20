@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard — Path·Finder</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/css/base.css">
+<link rel="stylesheet" href="/admin/css/dashboard.css">
+</head>
+<body>
+<div class="offline-banner" id="offlineBanner">
+  <svg class="icon" viewBox="0 0 24 24"><path d="M1 9a17 17 0 0 1 22 0M5 13a11 11 0 0 1 14 0M9 17a5 5 0 0 1 6 0"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+  Offline mode — QR scan lookups and Excel import require a connection.
+</div>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark">P</span> PATH·FINDER · STAFF</div>
+  <div class="topbar-meta" id="adminMeta">College of Computing Studies</div>
+  <div class="topbar-actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <button class="btn-ghost btn-sm" id="logoutBtn">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+      Sign out
+    </button>
+  </div>
+</header>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-tab="scan">
+    <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h3v3h-3zM20 14h1v1h-1zM14 20h1v1h-1zM17.5 17.5h1v1h-1zM20 17.5h1v3.5h-3.5"></path></svg>
+    Scan student ID
+  </button>
+  <button class="tab-btn" data-tab="roster">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M4 9h16M9 4v16"></path></svg>
+    Roster &amp; import
+  </button>
+  <button class="tab-btn" data-tab="concerns">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M12 8v4M12 16h.01"></path></svg>
+    Student concerns
+    <span class="badge-count" id="concernCount" hidden>0</span>
+  </button>
+</nav>
+
+<main>
+<section class="panel tab-panel active" id="tab-scan">
+  <div class="panel-head">
+    <p class="panel-tag">01 — QR Lookup</p>
+    <h2>Scan a student's digital ID</h2>
+    <p>Instead of manually retrieving a student's record, point the camera at their Path-Finder QR code to pull it up instantly.</p>
+  </div>
+  <div class="scan-layout">
+    <div class="card scanner-card">
+      <video id="scanVideo" autoplay playsinline muted></video>
+      <canvas id="scanCanvas" hidden></canvas>
+      <div class="scanner-overlay"><div class="scan-frame"></div></div>
+      <div class="scanner-controls">
+        <button class="btn" id="startScanBtn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M23 7v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          Start camera
+        </button>
+        <button class="btn-ghost" id="stopScanBtn" hidden>Stop</button>
+        <span class="scan-status" id="scanStatus"></span>
+      </div>
+      <div class="manual-entry">
+        <input type="text" id="manualToken" placeholder="Or type a QR token manually, e.g. UDM-XXXXXXXX">
+        <button class="btn-ghost btn-sm" id="manualLookupBtn">Look up</button>
+      </div>
+    </div>
+
+    <div class="card eval-card" id="evalCard">
+      <div class="empty-state" id="evalEmpty">Scan or look up a student to view their evaluation here.</div>
+      <div id="evalContent" hidden>
+        <div class="eval-print-area" id="evalPrintArea"></div>
+        <div class="eval-actions">
+          <button class="btn" id="printEvalBtn">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print evaluation
+          </button>
+          <button class="btn-ghost" id="newScanBtn">Scan another</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel tab-panel" id="tab-roster">
+  <div class="panel-head">
+    <p class="panel-tag">02 — Excel Import</p>
+    <h2>Bulk-load students and subjects</h2>
+    <p>Drop an Excel workbook or pick a file. Use the first worksheet for student details, subject code, name, units, year_level, sem, prerequisites, or grades with student_number, subject_code, grade, and optional term.</p>
+  </div>
+  <div class="import-grid">
+    <div class="card import-drop" id="studentDrop" data-kind="students">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+      <h3>Students Excel</h3>
+      <p>Drag a file here or</p>
+      <input type="file" id="studentFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <button class="btn-ghost btn-sm" id="studentBrowseBtn">Choose file</button>
+      <div class="import-result" id="studentImportResult"></div>
+    </div>
+    <div class="card import-drop" id="subjectDrop" data-kind="subjects">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+      <h3>Subjects Excel</h3>
+      <p>Drag a file here or</p>
+      <input type="file" id="subjectFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <button class="btn-ghost btn-sm" id="subjectBrowseBtn">Choose file</button>
+      <div class="import-result" id="subjectImportResult"></div>
+    </div>
+    <div class="card import-drop" id="gradesDrop" data-kind="grades">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+      <h3>Grades Excel</h3>
+      <p>student_number, subject_code, grade</p>
+      <input type="file" id="gradesFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <button class="btn-ghost btn-sm" id="gradesBrowseBtn">Choose file</button>
+      <div class="import-result" id="gradesImportResult"></div>
+    </div>
+  </div>
+  <div class="panel-head" style="margin-top:36px;">
+    <p class="panel-tag">Roster</p>
+    <h2>Current students</h2>
+  </div>
+  <div class="card roster-table-wrap">
+    <table class="roster-table" id="rosterTable">
+      <thead><tr><th>Student no.</th><th>Name</th><th>Year</th><th>Program</th><th>Status</th></tr></thead>
+      <tbody id="rosterBody"><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel tab-panel" id="tab-concerns">
+  <div class="panel-head">
+    <p class="panel-tag">03 — AI Escalations</p>
+    <h2>Concerns forwarded by the Path-Finder assistant</h2>
+    <p>When the assistant can't resolve a student's question on its own, it lands here. Mark a concern resolved to close the loop and notify the student's chat.</p>
+  </div>
+  <div class="concern-tabs">
+    <button class="concern-filter active" data-status="open">Open</button>
+    <button class="concern-filter" data-status="resolved">Resolved</button>
+  </div>
+  <div class="concern-list" id="concernList"><div class="empty-state">Loading…</div></div>
+</section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="/shared/js/config.js"></script>
+<script src="/shared/vendor/jsqr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module" src="/admin/js/dashboard.js"></script>
+</body>
+</html>

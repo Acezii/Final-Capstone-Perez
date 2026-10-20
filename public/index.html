@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Path·Finder — UDM College of Computing Studies</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/css/base.css">
+<style>
+.landing{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.landing-grid{display:grid;gap:18px;max-width:420px;width:100%;grid-template-columns:1fr;}
+.route-card{padding:32px 28px;text-align:left;transition:transform .18s ease,border-color .18s ease;}
+.route-card:hover{transform:translateY(-2px);border-color:var(--border-strong);}
+.route-card svg{width:30px;height:30px;stroke:var(--accent);margin-bottom:16px;}
+.route-card h2{font-size:20px;margin-bottom:8px;}
+.route-card p{color:var(--text-muted);font-size:13.5px;line-height:1.55;margin:0 0 18px;}
+.landing-head{text-align:center;margin-bottom:6px;}
+.landing-head .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+.landing-head h1{font-size:clamp(26px,4vw,36px);}
+</style>
+</head>
+<body>
+<div class="landing">
+  <div class="landing-grid">
+    <div class="landing-head">
+      <p class="eyebrow">College of Computing Studies · Universidad de Manila</p>
+      <h1>Path·Finder</h1>
+    </div>
+    <a class="card route-card" href="/student/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5Z"></path><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"></path></svg>
+      <h2>Student portal</h2>
+      <p>Check your prerequisite standing, build a conflict-free term, view your QR ID, and ask the Path-Finder assistant a question.</p>
+      <span class="btn-ghost">Continue as student</span>
+    </a>
+  </div>
+</div>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(function(){});
+}
+document.addEventListener("keydown", function(e){
+  var key = (e.key || "").toLowerCase();
+  if (navigator.onLine && e.ctrlKey && e.metaKey && key === "1") {
+    window.location.href = "/admin/";
+  }
+});
+</script>
+</body>
+</html>
