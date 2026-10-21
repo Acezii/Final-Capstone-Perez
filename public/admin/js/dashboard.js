@@ -27,6 +27,36 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
   });
 });
 
+const registerForm = document.getElementById("registerForm");
+const registerError = document.getElementById("registerError");
+const registerBtn = document.getElementById("registerBtn");
+registerForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  registerError.classList.remove("show");
+  registerBtn.disabled = true;
+  registerBtn.textContent = "Registering…";
+  try {
+    const result = await apiPost(
+      "/api/superadmin/admins",
+      {
+        username: document.getElementById("registerUsername").value.trim(),
+        fullName: document.getElementById("registerFullName").value.trim(),
+        password: document.getElementById("registerPassword").value,
+      },
+      "admin",
+      { noQueue: true }
+    );
+    registerError.textContent = `Registered ${result.username}. They can now sign in.`;
+    registerForm.reset();
+  } catch (err) {
+    registerError.textContent = err.message || "Unable to register account.";
+  } finally {
+    registerError.classList.add("show");
+    registerBtn.disabled = false;
+    registerBtn.textContent = "Register";
+  }
+});
+
 const themeToggle = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
 function setTheme(mode) {

@@ -44,6 +44,10 @@
     Student concerns
     <span class="badge-count" id="concernCount" hidden>0</span>
   </button>
+  <button class="tab-btn" data-tab="staff">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M19 8v6M16 11h6"></path></svg>
+    Add staff
+  </button>
 </nav>
 
 <main>
@@ -221,6 +225,21 @@
     </button>
   </div>
   <div class="concern-list" id="concernList"><div class="empty-state">Loading…</div></div>
+</section>
+
+<section class="panel tab-panel" id="tab-staff">
+  <div class="panel-head">
+    <p class="panel-tag">04 — Staff Accounts</p>
+    <h2>Register a staff account</h2>
+    <p>New staff can sign in with these credentials right away. Only signed-in staff can create accounts.</p>
+  </div>
+  <form id="registerForm" class="card" style="max-width:420px;padding:20px;">
+    <div class="field"><label for="registerUsername">Username</label><input type="text" id="registerUsername" required autocomplete="off"></div>
+    <div class="field"><label for="registerFullName">Full name</label><input type="text" id="registerFullName" required></div>
+    <div class="field"><label for="registerPassword">Password</label><input type="password" id="registerPassword" required autocomplete="new-password"></div>
+    <button type="submit" class="btn btn-block" id="registerBtn">Register</button>
+    <div class="auth-error" id="registerError"></div>
+  </form>
 </section>
 </main>
 

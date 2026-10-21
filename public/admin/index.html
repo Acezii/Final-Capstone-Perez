@@ -27,29 +27,43 @@
       </div>
       <button type="submit" class="btn btn-block" id="submitBtn">Sign in</button>
     </form>
-    <details style="margin-top:24px;">
-      <summary>Register staff account</summary>
-      <form id="registerForm" style="margin-top:16px;">
-        <div class="field">
-          <label for="registerUsername">Username</label>
-          <input type="text" id="registerUsername" required autocomplete="username">
-        </div>
-        <div class="field">
-          <label for="registerFullName">Full name</label>
-          <input type="text" id="registerFullName" required>
-        </div>
-        <div class="field">
-          <label for="registerPassword">Password</label>
-          <input type="password" id="registerPassword" required autocomplete="new-password">
-        </div>
-        <button type="submit" class="btn btn-block" id="registerBtn">Register</button>
-        <div class="auth-error" id="registerError"></div>
-      </form>
-    </details>
+    <p style="margin-top:20px;font-size:13px;">Need an account? Ask an existing staff member to add you from the dashboard.</p>
     <div class="auth-switch"><a href="/">← Back to portal selection</a></div>
   </div>
 </div>
 <script src="/shared/js/config.js"></script>
+<script type="module">
+import { apiPost, setToken, getToken } from "/shared/js/api.js";
+
+if (getToken("admin")) {
+  window.location.href = "/admin/dashboard.html";
+}
+
+const form = document.getElementById("loginForm");
+const errorBox = document.getElementById("authError");
+const submitBtn = document.getElementById("submitBtn");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errorBox.classList.remove("show");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Signing in…";
+  try {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const data = await apiPost("/api/auth/admin/login", { username, password }, "admin", { noQueue: true });
+    setToken("admin", data.token);
+    localStorage.setItem("pf_admin_profile", JSON.stringify(data.admin));
+    window.location.href = "/admin/dashboard.html";
+  } catch (err) {
+    errorBox.textContent = err.message || "Unable to sign in. Check your connection and try again.";
+    errorBox.classList.add("show");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Sign in";
+  }
+});
+</script>
 <script type="module">
 import { apiPost, setToken, getToken } from "/shared/js/api.js";
 

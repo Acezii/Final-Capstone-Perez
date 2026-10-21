@@ -5,9 +5,13 @@ const CAMERA_KEY = "pf_scan_camera";
 // Virtual cameras (OBS, Snap, etc.) often show up first on Windows and send a black picture.
 const VIRTUAL_CAMERA = /virtual|obs|snap ?camera|camo|droidcam|manycam|xsplit|nvidia broadcast|iriun/i;
 
+const RESCAN_DELAY_MS = 4000;
+
 export function initScanner({ video, canvas, startBtn, stopBtn, cameraSelect, statusEl, manualInput, manualBtn }, onToken) {
   const card = video.closest(".scanner-card");
   let blackCheckTimer = null;
+  let lastToken = "";
+  let lastScanAt = 0;
 
   function setStatus(text, warning = false) {
     statusEl.textContent = text;
@@ -175,10 +179,14 @@ export function initScanner({ video, canvas, startBtn, stopBtn, cameraSelect, st
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
       if (code && code.data) {
-        setStatus("Code detected — looking up…");
-        onToken(code.data);
-        stop();
-        return;
+        // Keep the camera running for the next student; skip repeat reads of the same code.
+        const now = Date.now();
+        if (code.data !== lastToken || now - lastScanAt > RESCAN_DELAY_MS) {
+          lastToken = code.data;
+          lastScanAt = now;
+          setStatus("Code detected — looking up…");
+          onToken(code.data);
+        }
       }
     }
     rafId = requestAnimationFrame(tick);
