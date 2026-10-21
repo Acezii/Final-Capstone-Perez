@@ -21,7 +21,7 @@ INSERT INTO subjects (id, code, name, units, year_level, sem) VALUES
 ('PE101','PE101','Physical Activity Towards Health and Fitness 1',2,1,1),
 ('NST101','NST101','NSTP 1',3,1,1),
 ('UID101','UID101','Manila Studies',1,1,1),
-('UID102','UID102','Ethics and Integrity',1,1,1),
+('UID102','UID102','Ethics and Integrity',1,1,2),
 ('GED103','GED103','Science, Technology and Society',3,1,2),
 ('RZL101','RZL101','The Life and Works of Rizal',3,1,2),
 ('MST101','MST101','Living in the IT Era',3,1,2),
