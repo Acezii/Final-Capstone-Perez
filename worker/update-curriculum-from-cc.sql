@@ -81,6 +81,12 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO prerequisites (subject_id, prerequisite_id) VALUES
 ('PE102','PE101'),
 ('NST102','NST101'),
+('UID102','UID101'),
+('UID103','UID102'),
+('UID104','UID103'),
+('UID105','UID104'),
+('UID106','UID105'),
+('UID107','UID106'),
 ('ITE113','ITE112'),
 ('ITE221','ITE114'),
 ('ITE216','ITE112'),
