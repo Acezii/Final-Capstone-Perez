@@ -37,32 +37,67 @@ function toMinutes(t) {
   return h * 60 + m;
 }
 
+// NSTP meets on Sundays only; every other subject is held Monday to Saturday.
+function isNstp(subjectId) {
+  return /^NST/i.test(subjectId);
+}
+
+function allowedOnDay(subjectId, day) {
+  return isNstp(subjectId) ? day === "Sun" : day !== "Sun";
+}
+
+function overlaps(a, b) {
+  return a.section.day === b.section.day && toMinutes(a.section.start_time) < toMinutes(b.section.end_time) && toMinutes(b.section.start_time) < toMinutes(a.section.end_time);
+}
+
+// Lower is better: penalises uneven class counts per day, then uneven minutes per day.
+function loadScore(picks) {
+  const count = {};
+  const minutes = {};
+  picks.forEach((p) => {
+    const d = p.section.day;
+    count[d] = (count[d] || 0) + 1;
+    minutes[d] = (minutes[d] || 0) + toMinutes(p.section.end_time) - toMinutes(p.section.start_time);
+  });
+  const sumSq = (o) => Object.values(o).reduce((a, v) => a + v * v, 0);
+  return sumSq(count) * 10000 + sumSq(minutes);
+}
+
 export function greedySchedule(subjectIds, sectionsBySubject) {
-  const pairs = [];
+  const options = {};
   subjectIds.forEach((id) => {
-    (sectionsBySubject[id] || []).forEach((sec) => {
-      pairs.push({ subjectId: id, section: sec, endMin: toMinutes(sec.end_time) });
-    });
+    options[id] = (sectionsBySubject[id] || [])
+      .filter((sec) => allowedOnDay(id, sec.day))
+      .map((sec) => ({ subjectId: id, section: sec }));
   });
-  pairs.sort((a, b) => a.endMin - b.endMin);
-  const accepted = [];
-  const scheduled = new Set();
-  pairs.forEach((p) => {
-    if (scheduled.has(p.subjectId)) return;
-    const s = toMinutes(p.section.start_time);
-    const e = toMinutes(p.section.end_time);
-    const conflict = accepted.some((a) => {
-      if (a.section.day !== p.section.day) return false;
-      const as = toMinutes(a.section.start_time);
-      const ae = toMinutes(a.section.end_time);
-      return s < ae && as < e;
-    });
-    if (!conflict) {
-      accepted.push(p);
-      scheduled.add(p.subjectId);
+
+  // Fewest options first, so tightly constrained subjects get placed before flexible ones.
+  const order = [...subjectIds].sort((a, b) => options[a].length - options[b].length);
+
+  let best = { picks: [], skipped: subjectIds.length + 1, score: Infinity };
+  let budget = 20000;
+
+  function search(i, picks, skipped) {
+    if (budget-- <= 0 || skipped > best.skipped) return;
+    if (i === order.length) {
+      const score = loadScore(picks);
+      if (skipped < best.skipped || score < best.score) best = { picks: [...picks], skipped, score };
+      return;
     }
-  });
-  const unresolved = subjectIds.filter((id) => !scheduled.has(id));
+    const id = order[i];
+    const fits = options[id].filter((p) => !picks.some((q) => overlaps(p, q)));
+    fits.forEach((p) => {
+      picks.push(p);
+      search(i + 1, picks, skipped);
+      picks.pop();
+    });
+    search(i + 1, picks, skipped + 1);
+  }
+  search(0, [], 0);
+
+  const accepted = best.picks;
+  const placed = new Set(accepted.map((p) => p.subjectId));
+  const unresolved = subjectIds.filter((id) => !placed.has(id));
   return { accepted, unresolved };
 }
 

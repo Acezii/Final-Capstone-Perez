@@ -1,4 +1,4 @@
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOUR_PX = 56;
 const PALETTE = 8;
 
