@@ -163,11 +163,17 @@ export function termBuilderTargetTerm(subjects, prereqMap, records) {
 }
 
 export function termBuilderEligibleSubjects(subjects, prereqMap, records) {
-  const { statusById, completed, termIndex, targetIndex } = termBuilderContext(subjects, prereqMap, records);
+  const { statusById, completed, terms, termIndex, targetIndex } = termBuilderContext(subjects, prereqMap, records);
+
+  const targetSem = Number(String(terms[targetIndex] || "").split("-")[1]);
 
   return subjects.filter((subject) => {
     if (completed.has(subject.id)) return false;
-    if (statusById.get(subject.id) === "failed") return false;
+    if (statusById.get(subject.id) === "failed") {
+      // A failed subject can only be retaken in the 1st semester of the next school year.
+      if (targetSem !== 1) return false;
+      return (prereqMap[subject.id] || []).every((prerequisiteId) => completed.has(prerequisiteId));
+    }
     if (blockedByFailed(subject.id, prereqMap, statusById)) return false;
     if (hasFuturePrerequisite(subject.id, subjects, prereqMap, termIndex)) return false;
 

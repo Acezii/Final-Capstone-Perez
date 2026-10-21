@@ -58,8 +58,8 @@ async function studentProgress(db, studentId) {
     const s = subjects.find((x) => x.id === id);
     let status = "locked";
     if (completedSet.has(id)) status = "completed";
-    else if (statusById.get(id) === "failed") status = "failed";
     else if (termBuilderEligible.has(id)) status = "eligible";
+    else if (statusById.get(id) === "failed") status = "failed";
     return { ...s, status };
   });
   const estSemesters = Math.max(0, Math.ceil(remainingUnits / 18));
