@@ -1,6 +1,9 @@
 -- Replaces all sections: 4 sections per subject across Mon-Sat; NSTP on Sunday only.
+-- Subjects missing from the subjects table are skipped instead of failing the whole query.
 DELETE FROM sections;
-INSERT INTO sections (subject_id, section_code, day, start_time, end_time, room, instructor, term) VALUES
+INSERT INTO sections (subject_id, section_code, day, start_time, end_time, room, instructor, term)
+SELECT v.subject_id, v.section_code, v.day, v.start_time::time, v.end_time::time, v.room, v.instructor, v.term
+FROM (VALUES
 ('GED101','A','Mon','07:00','09:30','CCS-201','Mr. Atienza','2026-2027-1'),
 ('GED101','B','Wed','09:30','12:00','CCS-202','Ms. Fernandez','2026-2027-1'),
 ('GED101','C','Fri','13:00','15:30','CCS-203','Mr. Torres','2026-2027-1'),
@@ -216,4 +219,6 @@ INSERT INTO sections (subject_id, section_code, day, start_time, end_time, room,
 ('ITE423','A','Mon','13:00','15:30','GE-105','Ms. Roldan','2026-2027-1'),
 ('ITE423','B','Wed','15:30','18:00','MATH-102','Ms. Bautista','2026-2027-1'),
 ('ITE423','C','Fri','07:00','09:30','CCS-201','Mr. Atienza','2026-2027-1'),
-('ITE423','D','Mon','09:30','12:00','CCS-202','Ms. Fernandez','2026-2027-1');
+('ITE423','D','Mon','09:30','12:00','CCS-202','Ms. Fernandez','2026-2027-1')
+) AS v(subject_id, section_code, day, start_time, end_time, room, instructor, term)
+WHERE EXISTS (SELECT 1 FROM subjects s WHERE s.id = v.subject_id);
